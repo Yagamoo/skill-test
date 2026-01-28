@@ -1,0 +1,92 @@
+<?php
+
+namespace App\Http\Controllers\Post;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Post\StorePostRequest;
+use App\Models\Post;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
+
+class PostController extends Controller
+{
+    use AuthorizesRequests;
+
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(): JsonResponse
+    {
+        $posts = Post::with('user')
+            ->published()
+            ->paginate(20);
+
+        return response()->json($posts);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create(): string
+    {
+        return 'posts.create';
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(StorePostRequest $request)
+    {
+        $post = Auth::user()->posts()->create($request->validated());
+
+        return response()->json($post, 201);
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Post $post): JsonResponse
+    {
+        if ($post->is_draft || $post->published_at > now()) {
+            abort(404);
+        }
+
+        return response()->json($post->load('user'));
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Post $post): string
+    {
+        Gate::authorize('update', $post);
+
+        return 'posts.edit';
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(StorePostRequest $request, Post $post): JsonResponse
+    {
+        Gate::authorize('update', $post);
+
+        $post->update($request->validated());
+
+        return response()->json($post);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Post $post): JsonResponse
+    {
+        Gate::authorize('delete', $post);
+
+        $post->delete();
+
+        return response()->json(['message' => 'Post deleted']);
+    }
+}
