@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Post;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Post\StorePostRequest;
+use App\Http\Resources\Post\PostResource;
 use App\Models\Post;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
 class PostController extends Controller
@@ -23,7 +23,7 @@ class PostController extends Controller
             ->published()
             ->paginate(20);
 
-        return response()->json($posts);
+        return PostResource::collection($posts)->response();
     }
 
     /**
@@ -39,9 +39,9 @@ class PostController extends Controller
      */
     public function store(StorePostRequest $request)
     {
-        $post = Auth::user()->posts()->create($request->validated());
+        $post = $request->user()->posts()->create($request->validated());
 
-        return response()->json($post, 201);
+        return (new PostResource($post))->response()->setStatusCode(201);
     }
 
     /**
@@ -49,11 +49,11 @@ class PostController extends Controller
      */
     public function show(Post $post): JsonResponse
     {
-        if ($post->is_draft || $post->published_at > now()) {
+        if ($post->is_draft || ($post->published_at && $post->published_at > now())) {
             abort(404);
         }
 
-        return response()->json($post->load('user'));
+        return (new PostResource($post->load('user')))->response();
     }
 
     /**
@@ -75,7 +75,7 @@ class PostController extends Controller
 
         $post->update($request->validated());
 
-        return response()->json($post);
+        return (new PostResource($post))->response();
     }
 
     /**
