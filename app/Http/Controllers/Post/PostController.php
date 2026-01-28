@@ -47,13 +47,11 @@ class PostController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Post $post): JsonResponse
+    public function show($id): JsonResponse
     {
-        if ($post->is_draft || ($post->published_at && $post->published_at > now())) {
-            abort(404);
-        }
+        $post = Post::published()->with('user')->findOrFail($id);
 
-        return (new PostResource($post->load('user')))->response();
+        return (new PostResource($post))->response();
     }
 
     /**
@@ -87,6 +85,6 @@ class PostController extends Controller
 
         $post->delete();
 
-        return response()->json(['message' => 'Post deleted']);
+        return response()->json(['message' => 'Post deleted'], 200);
     }
 }
