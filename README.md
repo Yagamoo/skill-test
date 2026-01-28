@@ -86,3 +86,22 @@ Sample users and posts are provided.
 ```bash
 php artisan db:seed
 ```
+# How to Test
+Since this project focuses on the API/Backend logic and does not include view files, you can test the endpoints using **Postman**, **Insomnia**, or **cURL**.
+
+## Requirements & Endpoints
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| **GET** | `/posts` | Public | Paginated list of active posts (20 per page). Includes author data. |
+| **GET** | `/posts/{id}` | Public | Show single active post. Returns **404** if the post is draft/scheduled. |
+| **GET** | `/posts/create` | Authenticated | Returns string `posts.create`. |
+| **POST** | `/posts` | Authenticated | Validate and store a new post linked to the auth user. |
+| **GET** | `/posts/{id}/edit` | Author Only | Returns string `posts.edit`. |
+| **PUT** | `/posts/{id}` | Author Only | Validate and update the specified post. |
+| **DELETE** | `/posts/{id}` | Author Only | Permanently delete the specified post. |
+
+## Quick Start for API Testing
+1. Login First: Send a POST request to /login with email and password from the seeder to establish a session.
+2. Postman Cookies: Postman will automatically store the session cookie for subsequent authenticated requests.
+3. CSRF: For testing purposes, CSRF protection is disabled for /login and posts/* routes in bootstrap/app.php.
+4. Status Filter: "Active" posts are defined as is_draft: false AND published_at <= now().
